@@ -1,0 +1,783 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="CogniCare: daily memory check-ins, monthly screening, and a doctor-ready report for Tennessee families.">
+<style>[hidden]{display:none!important} img{max-width:100%} body{margin:0}</style>
+<title>CogniCare</title>
+<style>
+/* Layout: a single-column field notebook. Flat ruled sections, square edges, coral as ink for marks and selections, one coral band for status. */
+:root {
+  --bg: #fdf6f5;
+  --surface: #ffffff;
+  --ink: #000000;
+  --muted: #000000;
+  --rule: #ecd3d3;
+  --coral: #e2525c;
+  --coral-deep: #000000;
+  --coral-wash: #fbe3e2;
+  --on-coral: #000000;
+  --good: #2f7d5b;
+  --warn: #b26a12;
+  --bad: #b3263a;
+  --chart-dot: #efa3a6;
+  --focus: #1f6fb2;
+  --font-display: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  --font-body: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  --nav-h: 64px;
+}
+/* Light-only by request: all text is black, so the page keeps a light background in every theme. */
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 calc(var(--nav-h) + 24px + env(safe-area-inset-bottom, 0px));
+}
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; font-weight: 500; }
+h1 { font-size: 64px; letter-spacing: -1px; line-height: 1.02; }
+h2 { font-size: 30px; letter-spacing: -0.5px; line-height: 1.15; }
+h3 { font-size: 21px; line-height: 1.25; }
+p { margin: 0; max-width: 65ch; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.wrap { max-width: 720px; margin: 0 auto; }
+
+/* Header + nav */
+.top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-block: 18px 14px; border-bottom: 1px solid var(--rule); }
+.brand { font-family: var(--font-display); font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+.brand span { color: #000; }
+.where { font-size: 13px; color: var(--muted); text-align: right; }
+nav.tabs { display: flex; gap: 0; }
+nav.tabs button {
+  flex: 1; background: none; border: 0; padding: 14px 6px 12px; cursor: pointer;
+  font-size: 15px; font-weight: 500; color: var(--muted); border-top: 3px solid transparent;
+}
+nav.tabs button[aria-current="page"] { color: var(--ink); border-top-color: var(--coral); }
+@media (max-width: 719px) {
+  nav.tabs {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+    background: var(--surface); border-top: 1px solid var(--rule);
+    padding-left: max(8px, env(safe-area-inset-left, 0px));
+    padding-right: max(8px, env(safe-area-inset-right, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+@media (min-width: 720px) {
+  body { padding-block: 0 48px; }
+  nav.tabs { border-bottom: 1px solid var(--rule); }
+  nav.tabs button { flex: 0 0 auto; padding: 12px 18px 10px; border-top: 0; border-bottom: 3px solid transparent; }
+  nav.tabs button[aria-current="page"] { border-bottom-color: var(--coral); }
+}
+
+/* Generic blocks */
+.view { display: grid; gap: 40px; padding-top: 32px; }
+.lede { display: grid; gap: 14px; }
+.eyebrow { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--coral-deep); font-weight: 700; }
+.muted { color: var(--muted); }
+.small { font-size: 14px; }
+.section { display: grid; gap: 18px; padding-top: 24px; border-top: 1px solid var(--rule); }
+.section-head { display: flex; gap: 14px; align-items: baseline; }
+.step-n { font-family: var(--font-display); font-style: italic; color: #000; font-size: 28px; line-height: 1; min-width: 28px; }
+.banner { background: var(--coral-wash); border-left: 4px solid var(--coral); padding: 12px 14px; font-size: 15px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+.btn {
+  appearance: none; border: 2px solid var(--ink); background: var(--coral); color: #000;
+  padding: 12px 20px; font-weight: 700; cursor: pointer; border-radius: 0; font-size: 16px;
+}
+.btn.coral { background: var(--coral); color: #000; }
+.btn.ghost { background: transparent; color: var(--ink); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.linklike { background: none; border: 0; padding: 0; color: var(--coral-deep); text-decoration: underline; cursor: pointer; font-weight: 500; }
+
+/* Questions */
+.q { display: grid; gap: 10px; padding-block: 14px; border-bottom: 1px dashed var(--rule); }
+.q:last-child { border-bottom: 0; }
+.q-text { font-weight: 500; }
+.q-sub { font-size: 14px; color: var(--muted); margin-top: -6px; }
+.scale { display: grid; grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)); border: 1px solid var(--ink); }
+.scale button {
+  background: var(--surface); border: 0; border-right: 1px solid var(--ink); padding: 10px 4px;
+  font-size: 14px; cursor: pointer; line-height: 1.25; min-height: 48px;
+}
+.scale button:last-child { border-right: 0; }
+.scale button[aria-pressed="true"] { background: var(--coral); color: var(--on-coral); font-weight: 700; }
+.scale button:hover:not([aria-pressed="true"]) { background: var(--coral-wash); }
+.days { --n: 7; }
+@media (max-width: 460px) { .days { grid-template-columns: repeat(4, minmax(0, 1fr)); } .days button { border-bottom: 1px solid var(--ink); } }
+
+.words { display: flex; gap: 0; flex-wrap: wrap; border: 1px solid var(--ink); }
+.words div { flex: 1 1 120px; padding: 18px 10px; text-align: center; font-family: var(--font-display); font-size: 30px; border-right: 1px solid var(--ink); }
+.words div:last-child { border-right: 0; }
+.recall { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+input[type="text"], input[type="number"], select, textarea {
+  width: 100%; background: var(--surface); border: 1px solid var(--ink); border-radius: 0; padding: 11px 12px; min-width: 0;
+}
+textarea { min-height: 84px; resize: vertical; }
+label.field { display: grid; gap: 6px; font-size: 14px; font-weight: 500; }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 520px) { .form-grid, .recall { grid-template-columns: 1fr; } }
+
+/* Results / stats */
+.figures { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 2px solid var(--ink); border-bottom: 1px solid var(--rule); }
+.figure { padding: 14px 12px 14px 0; display: grid; gap: 2px; align-content: start; min-width: 0; }
+.figure + .figure { padding-left: 12px; border-left: 1px solid var(--rule); }
+.figure .num { font-family: var(--font-display); font-size: 36px; line-height: 1.05; font-variant-numeric: tabular-nums lining-nums; }
+.figure .num small { font-size: 16px; color: var(--muted); font-family: var(--font-body); }
+.figure .lab { font-size: 13px; color: var(--muted); }
+@media (max-width: 560px) { .figures { grid-template-columns: repeat(2, minmax(0, 1fr)); } .figure:nth-child(3) { padding-left: 0; border-left: 0; } .figure:nth-child(n+3) { border-top: 1px solid var(--rule); } }
+
+.status-band { background: var(--coral); color: #000; padding: 20px; display: grid; gap: 6px; }
+.status-band.steady { background: #bfe3cf; }
+.status-band.watch { background: #f6d49a; }
+.status-band.none { background: var(--coral-wash); border: 1px solid #000; }
+.status-band .lvl { font-family: var(--font-display); font-size: 34px; line-height: 1.1; }
+
+.concerns { list-style: none; padding: 0; margin: 0; display: grid; }
+.concerns li { padding: 12px 0; border-bottom: 1px solid var(--rule); display: grid; grid-template-columns: 92px 1fr; gap: 12px; }
+.concerns li:last-child { border-bottom: 0; }
+.tag { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; padding: 3px 6px; align-self: start; justify-self: start; border: 1px solid currentColor; }
+.tag { color: #000; } .tag.high { background: var(--coral-wash); }
+
+.chart-box { overflow-x: auto; }
+.chart svg { width: 100%; height: auto; display: block; min-width: 320px; }
+.chart .grid { stroke: var(--rule); stroke-width: 1; }
+.chart .axis { fill: var(--muted); font-size: 11px; font-family: var(--font-body); }
+.chart .dot { fill: var(--chart-dot); }
+.chart .line { fill: none; stroke: var(--coral); stroke-width: 2.5; stroke-linejoin: round; }
+.chart .area { fill: var(--coral); opacity: 0.1; }
+.chart .end { fill: var(--coral); stroke: var(--surface); stroke-width: 2; }
+.chart .endlab { fill: var(--ink); font-size: 12px; font-weight: 700; font-family: var(--font-body); }
+.chart .scr { stroke: var(--ink); stroke-dasharray: 3 3; }
+.chart .scrlab { fill: var(--ink); font-size: 10px; font-family: var(--font-body); }
+.seg { display: inline-flex; border: 1px solid var(--ink); }
+.seg button { background: var(--surface); border: 0; padding: 6px 12px; cursor: pointer; font-size: 14px; }
+.seg button + button { border-left: 1px solid var(--ink); }
+.seg button[aria-pressed="true"] { background: var(--coral); color: #000; font-weight: 700; }
+
+.domains { display: grid; gap: 14px; }
+.domain { display: grid; grid-template-columns: 150px 1fr 92px; gap: 12px; align-items: center; }
+.domain .bars { display: grid; gap: 4px; }
+.bar { height: 10px; background: var(--coral-wash); position: relative; }
+.bar i { position: absolute; inset: 0 auto 0 0; background: var(--muted); }
+.bar.recent i { background: var(--coral); }
+.domain .chg { font-size: 14px; font-variant-numeric: tabular-nums; text-align: right; }
+@media (max-width: 520px) { .domain { grid-template-columns: 1fr 80px; } .domain .bars { grid-column: 1 / -1; grid-row: 2; } }
+.legend { display: flex; gap: 18px; font-size: 13px; color: var(--muted); flex-wrap: wrap; }
+.legend span::before { content: ""; display: inline-block; width: 14px; height: 8px; margin-right: 6px; background: var(--muted); }
+.legend span.r::before { background: var(--coral); }
+.legend span.l::before { height: 3px; background: var(--coral); vertical-align: middle; }
+.legend span.d::before { width: 7px; height: 7px; border-radius: 50%; background: var(--chart-dot); }
+
+.log { list-style: none; padding: 0; margin: 0; }
+.log li { display: grid; grid-template-columns: 70px 1fr auto; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--rule); align-items: start; }
+.log .d { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.log .c { font-weight: 700; font-size: 14px; }
+.table-box { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 8px 10px 8px 0; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; }
+
+.sheet { background: var(--surface); border: 1px solid var(--ink); padding: 24px clamp(16px, 4vw, 36px); display: grid; gap: 20px; }
+.sheet-head { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; border-bottom: 2px solid var(--coral); padding-bottom: 14px; }
+.sheet dl { display: grid; grid-template-columns: 150px 1fr; gap: 6px 14px; margin: 0; font-size: 15px; }
+.sheet dt { color: var(--muted); }
+.sheet dd { margin: 0; }
+@media (max-width: 480px) { .sheet dl { grid-template-columns: 1fr; } .sheet dd { margin-bottom: 6px; } }
+.note { font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 12px; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--nav-h) + 16px + env(safe-area-inset-bottom, 0px)); background: var(--coral-wash); color: #000; border: 1px solid #000; padding: 10px 16px; font-size: 14px; z-index: 20; max-width: calc(100% - 32px); }
+@media (min-width: 720px) { .toast { bottom: 24px; } }
+.resources { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0; border-top: 1px solid var(--rule); }
+.resources div { padding: 14px 14px 14px 0; display: grid; gap: 4px; border-bottom: 1px solid var(--rule); }
+.resources .ph { font-variant-numeric: tabular-nums; font-weight: 700; user-select: all; }
+@media (prefers-reduced-motion: no-preference) { .view { animation: rise .35s ease-out both; } @keyframes rise { from { transform: translateY(6px); } to { transform: none; } } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">Cogni<span>Care</span></div>  </header>
+  <nav class="tabs" aria-label="Sections">
+    <button data-tab="today">Today</button>
+    <button data-tab="screening">Screening</button>
+    <button data-tab="dashboard">Dashboard</button>
+    <button data-tab="report">Report</button>
+  </nav>
+  <main id="app"></main>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function () {
+"use strict";
+
+/* ---------- helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const pad = n => String(n).padStart(2, "0");
+const keyOf = d => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+const parseKey = k => { const [y, m, d] = k.split("-").map(Number); return new Date(y, m - 1, d); };
+const todayKey = () => keyOf(new Date());
+const addDays = (k, n) => { const d = parseKey(k); d.setDate(d.getDate() + n); return keyOf(d); };
+const daysBetween = (a, b) => Math.round((parseKey(b) - parseKey(a)) / 86400000);
+const fmtLong = k => parseKey(k).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+const fmtShort = k => parseKey(k).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+const fmtFull = k => parseKey(k).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+const avg = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+const r1 = n => n == null ? "n/a" : (Math.round(n * 10) / 10).toFixed(1);
+const DAYNAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+function toast(msg) {
+  const t = $("#toast"); t.textContent = msg; t.hidden = false;
+  clearTimeout(toast.t); toast.t = setTimeout(() => { t.hidden = true; }, 2600);
+}
+const ls = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+};
+
+/* ---------- content ---------- */
+const DAILY = [
+  { id: "mem1", domain: "memory", text: "Misplaced everyday items", sub: "Keys, glasses, phone, the remote" },
+  { id: "mem2", domain: "memory", text: "Forgot a recent conversation, appointment, or event" },
+  { id: "lang1", domain: "language", text: "Had trouble finding the right word or someone's name" },
+  { id: "exe1", domain: "executive", text: "Lost the thread of a conversation, show, or book" },
+  { id: "exe2", domain: "executive", text: "Struggled with the steps of a familiar task", sub: "Following a recipe, paying a bill, working the TV" },
+  { id: "ori1", domain: "orientation", text: "Felt unsure of the date, the time, or where you were" }
+];
+const FREQ = ["Not at all", "Once", "A few times", "Many times"];
+const DOMAINS = { memory: "Memory", executive: "Executive function", orientation: "Orientation", language: "Language" };
+
+const SCREEN = [
+  { id: "s_m1", domain: "memory", text: "Repeats the same questions, stories, or statements" },
+  { id: "s_m2", domain: "memory", text: "Has trouble remembering appointments or plans" },
+  { id: "s_m3", domain: "memory", text: "Has trouble learning to use a new phone, appliance, or tool" },
+  { id: "s_e1", domain: "executive", text: "Has trouble handling money, bills, or checkbooks" },
+  { id: "s_e2", domain: "executive", text: "Shows poorer judgment, such as falling for scams or unsafe decisions" },
+  { id: "s_e3", domain: "executive", text: "Has trouble planning a meal, a trip, or a week of errands" },
+  { id: "s_e4", domain: "executive", text: "Has less interest in hobbies, church, or social plans" },
+  { id: "s_o1", domain: "orientation", text: "Gets turned around on familiar roads or in familiar places" },
+  { id: "s_o2", domain: "orientation", text: "Is confused about the month, the year, or the season" },
+  { id: "s_l1", domain: "language", text: "Has trouble following a conversation with several people" },
+  { id: "s_l2", domain: "language", text: "Pauses often to search for common words" }
+];
+const CHANGE = ["No change", "A little worse", "Much worse", "Not sure"];
+const SCD = [
+  { id: "scd", text: "In the past 12 months, has confusion or memory loss been happening more often or getting worse?", opts: ["Yes", "No", "Not sure"] },
+  { id: "f1", text: "Because of it, how often have day-to-day household chores been given up?", opts: ["Often", "Sometimes", "Rarely or never"], gate: true },
+  { id: "f2", text: "How often has help been needed with day-to-day activities, like cooking, cleaning, medicines, or appointments?", opts: ["Often", "Sometimes", "Rarely or never"], gate: true },
+  { id: "f3", text: "How often has it interfered with work, volunteering, or time with other people?", opts: ["Often", "Sometimes", "Rarely or never"], gate: true },
+  { id: "f4", text: "Has anyone talked about these changes with a doctor or other health care provider?", opts: ["Yes", "No"], gate: true }
+];
+const LOGCATS = ["Memory slip", "Repeated a question", "Got lost or disoriented", "Missed or doubled a medication", "Trouble with money or bills", "Mood or personality change", "Safety concern", "Something else"];
+
+const WORDS = ["banjo", "river", "candle", "magnolia", "button", "pencil", "window", "quilt", "tiger", "harbor", "fiddle", "meadow", "ladder", "cotton", "saddle", "lantern", "biscuit", "creek", "violin", "orchard", "kettle", "pepper", "sparrow", "barn"];
+function wordsFor(k) {
+  const n = daysBetween("2024-01-01", k);
+  return [WORDS[(n * 7) % 24], WORDS[(n * 7 + 9) % 24], WORDS[(n * 7 + 17) % 24]];
+}
+
+const COUNTIES = "Anderson,Bedford,Benton,Bledsoe,Blount,Bradley,Campbell,Cannon,Carroll,Carter,Cheatham,Chester,Claiborne,Clay,Cocke,Coffee,Crockett,Cumberland,Davidson,Decatur,DeKalb,Dickson,Dyer,Fayette,Fentress,Franklin,Gibson,Giles,Grainger,Greene,Grundy,Hamblen,Hamilton,Hancock,Hardeman,Hardin,Hawkins,Haywood,Henderson,Henry,Hickman,Houston,Humphreys,Jackson,Jefferson,Johnson,Knox,Lake,Lauderdale,Lawrence,Lewis,Lincoln,Loudon,McMinn,McNairy,Macon,Madison,Marion,Marshall,Maury,Meigs,Monroe,Montgomery,Moore,Morgan,Obion,Overton,Perry,Pickett,Polk,Putnam,Rhea,Roane,Robertson,Rutherford,Scott,Sequatchie,Sevier,Shelby,Smith,Stewart,Sullivan,Sumner,Tipton,Trousdale,Unicoi,Union,Van Buren,Warren,Washington,Wayne,Weakley,White,Williamson,Wilson".split(",");
+
+/* ---------- storage ---------- */
+const Store = {
+  mode: "local", entries: ls.get("cc.entries", {}), profile: ls.get("cc.profile", {}), col: null,
+  async init() {
+    try {
+      const use = window.claude && window.claude.use;
+      if (!use) return;
+      const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
+      if (!db || !user) return;
+      const id = await user.id();
+      if (!id) return;
+      const col = db.collection("data/users/" + id);
+      const snap = await col.get();
+      const remote = {}; let profile = null;
+      snap.docs.forEach(d => { const v = d.data(); if (!v) return; if (d.id === "profile") profile = v; else remote[d.id] = v; });
+      this.col = col; this.mode = "cloud";
+      const localOnly = Object.keys(this.entries).filter(k => !remote[k]);
+      for (const k of localOnly) { remote[k] = this.entries[k]; col.doc(k).set(this.entries[k]).catch(() => {}); }
+      if (!profile && Object.keys(this.profile).length) col.doc("profile").set(this.profile).catch(() => {});
+      this.entries = remote; this.profile = profile || this.profile;
+      ls.set("cc.entries", this.entries); ls.set("cc.profile", this.profile);
+      render();
+    } catch (e) { /* stay on device storage */ }  },
+  put(id, v) {
+    this.entries[id] = v; ls.set("cc.entries", this.entries);
+    if (this.col) this.col.doc(id).set(v).catch(() => toast("Could not sync to your account. Kept on this device."));
+  },
+  del(id) {
+    delete this.entries[id]; ls.set("cc.entries", this.entries);
+    if (this.col) this.col.doc(id).delete().catch(() => {});
+  },
+  setProfile(p) {
+    this.profile = p; ls.set("cc.profile", p);
+    if (this.col) this.col.doc("profile").set(p).catch(() => {});
+  },
+  clearAll() {
+    Object.keys(this.entries).forEach(k => this.del(k));
+    this.setProfile({});
+  }
+};
+function data() {
+  const e = Store.entries;
+  const all = Object.values(e).sort((a, b) => a.date < b.date ? -1 : 1);
+  return { checkins: all.filter(x => x.type === "checkin"), screens: all.filter(x => x.type === "screening"), logs: all.filter(x => x.type === "log") };
+}
+
+/* ---------- scoring ---------- */
+const ciScore = c => DAILY.reduce((s, q) => s + (c.answers[q.id] || 0), 0);
+const dayOk = c => c.dayGuess === parseKey(c.date).getDay();
+function domainDaily(list, dom) {
+  const qs = DAILY.filter(q => q.domain === dom);
+  return avg(list.map(c => avg(qs.map(q => c.answers[q.id] || 0))));
+}
+function screenDomain(s, dom) {
+  const qs = SCREEN.filter(q => q.domain === dom && s.answers[q.id] !== 3);
+  if (!qs.length) return null;
+  return qs.reduce((a, q) => a + s.answers[q.id], 0) / (qs.length * 2);
+}
+
+function analyze(d) {
+  const t = todayKey();
+  const recent = d.checkins.filter(c => daysBetween(c.date, t) < 14);
+  const prior = d.checkins.filter(c => { const g = daysBetween(c.date, t); return g >= 14 && g < 70; });
+  const last30 = d.checkins.filter(c => daysBetween(c.date, t) < 30);
+  const out = {
+    recentAvg: avg(recent.map(ciScore)), priorAvg: avg(prior.map(ciScore)),
+    recallRecent: avg(recent.map(c => c.recall)), recallPrior: avg(prior.map(c => c.recall)),
+    oriMiss: recent.filter(c => !dayOk(c)).length,
+    oriPct: last30.length ? last30.filter(dayOk).length / last30.length : null,
+    recallPct: last30.length ? avg(last30.map(c => c.recall)) / 3 : null,
+    count30: last30.length, recent, prior, concerns: [], points: 0
+  };
+  const add = (lvl, area, text) => { out.concerns.push({ lvl, area, text }); out.points += lvl === "high" ? 2 : 1; };
+
+  if (out.recentAvg != null && out.priorAvg != null && out.recentAvg - out.priorAvg >= 1.5) {
+    add(out.recentAvg - out.priorAvg >= 3 ? "high" : "mid", "Overall", `Daily concern score rose from ${r1(out.priorAvg)} to ${r1(out.recentAvg)} out of 18 when the last two weeks are compared with the weeks before.`);
+  }
+  Object.keys(DOMAINS).forEach(dom => {
+    const a = domainDaily(prior, dom), b = domainDaily(recent, dom);
+    if (a != null && b != null && b - a >= 0.5) add(b - a >= 0.9 ? "high" : "mid", DOMAINS[dom], `Self-reported ${DOMAINS[dom].toLowerCase()} problems went from ${r1(a)} to ${r1(b)} on a 0 to 3 scale.`);
+  });
+  if (recent.length >= 5 && out.recallRecent < 2.2 && (out.recallPrior == null || out.recallPrior - out.recallRecent >= 0.4)) {
+    add(out.recallRecent < 1.6 ? "high" : "mid", "Memory", `Three-word recall averaged ${r1(out.recallRecent)} of 3 over the last two weeks` + (out.recallPrior != null ? `, down from ${r1(out.recallPrior)}.` : "."));
+  }
+  if (out.oriMiss >= 2) add(out.oriMiss >= 4 ? "high" : "mid", "Orientation", `Named the wrong day of the week on ${out.oriMiss} of ${recent.length} check-ins in the last two weeks.`);
+  const ls2 = d.screens[d.screens.length - 1];
+  if (ls2) {
+    const sc = ls2.scd || {};
+    const fx = ["f1", "f2", "f3"].filter(f => sc[f] === "Often" || sc[f] === "Sometimes");
+    if (sc.scd === "Yes" && fx.length) add("high", "Daily function", `Latest screening (${fmtShort(ls2.date)}) reports worsening memory that is already affecting ${fx.length === 1 ? "one area" : fx.length + " areas"} of daily life.`);
+    else if (sc.scd === "Yes") add("mid", "Daily function", `Latest screening (${fmtShort(ls2.date)}) reports that confusion or memory loss is getting worse.`);
+    if (sc.scd === "Yes" && sc.f4 === "No") add("mid", "Care", "These changes have not yet been discussed with a health care provider.");
+  }
+  const safety = d.logs.filter(l => daysBetween(l.date, t) < 30 && (l.cat === "Safety concern" || l.cat === "Got lost or disoriented" || l.cat === "Missed or doubled a medication"));
+  if (safety.length) add(safety.length > 1 ? "high" : "mid", "Safety", `${safety.length} logged event${safety.length > 1 ? "s" : ""} in the past 30 days involving safety, getting lost, or medication.`);
+
+  out.level = d.checkins.length < 3 && !out.concerns.length ? "none" : out.points >= 4 ? "doctor" : out.points >= 1 ? "watch" : "steady";
+  return out;
+}
+const LEVELS = {
+  none: { name: "Not enough data yet", cls: "none", text: "Complete a few daily check-ins and one monthly screening. Comparisons start to mean something after about three weeks of check-ins." },
+  steady: { name: "Steady", cls: "steady", text: "No meaningful change shows up in the recent record. Keep checking in so the baseline stays useful." },
+  watch: { name: "Watch closely", cls: "watch", text: "Some measures have shifted. That can come from poor sleep, stress, illness, or a new medicine. Keep the routine going and note anything unusual." },
+  doctor: { name: "Bring this to your doctor", cls: "doctor", text: "Several measures have changed at the same time. Share the report with a primary care provider and ask whether a formal memory evaluation makes sense." }
+};
+
+/* ---------- chart ---------- */
+function chartSVG(d, days, colors) {
+  const W = 640, H = 230, L = 34, R = 46, T = 14, B = 28;
+  const t = todayKey(), start = addDays(t, -(days - 1));
+  const pts = d.checkins.filter(c => c.date >= start);
+  const x = k => L + (daysBetween(start, k) / (days - 1)) * (W - L - R);
+  const y = v => T + (1 - v / 18) * (H - T - B);
+  const st = (cls, inline) => colors ? `style="${inline}"` : `class="${cls}"`;
+  let g = "";
+  [0, 6, 12, 18].forEach(v => {
+    g += `<line ${st("grid", `stroke:${colors && colors.rule};stroke-width:1`)} x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/>`;
+    g += `<text ${st("axis", `fill:${colors && colors.muted};font-size:11px;font-family:Arial`)} x="${L - 8}" y="${y(v) + 4}" text-anchor="end">${v}</text>`;
+  });
+  [start, addDays(start, Math.floor((days - 1) / 2)), t].forEach((k, i) => {
+    g += `<text ${st("axis", `fill:${colors && colors.muted};font-size:11px;font-family:Arial`)} x="${x(k)}" y="${H - 8}" text-anchor="${["start", "middle", "end"][i]}">${fmtShort(k)}</text>`;
+  });
+  d.screens.filter(s => s.date >= start).forEach(s => {
+    g += `<line ${st("scr", `stroke:${colors && colors.ink};stroke-dasharray:3 3`)} x1="${x(s.date)}" x2="${x(s.date)}" y1="${T}" y2="${H - B}"/>`;
+    g += `<text ${st("scrlab", `fill:${colors && colors.ink};font-size:10px;font-family:Arial`)} x="${x(s.date) + 4}" y="${T + 10}">Screening</text>`;
+  });
+  if (!pts.length) {
+    return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="No check-ins in this period">${g}<text ${st("axis", "fill:#888;font-size:13px")} x="${W / 2}" y="${H / 2}" text-anchor="middle">No check-ins in this period yet</text></svg>`;
+  }
+  pts.forEach(c => { g += `<circle ${st("dot", `fill:${colors && colors.dot}`)} cx="${x(c.date).toFixed(1)}" cy="${y(ciScore(c)).toFixed(1)}" r="3"/>`; });
+  const roll = pts.map(c => { const win = d.checkins.filter(o => o.date <= c.date && daysBetween(o.date, c.date) < 7); return [x(c.date), y(avg(win.map(ciScore))), avg(win.map(ciScore))]; });
+  const path = roll.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
+  const area = path + ` L${roll[roll.length - 1][0].toFixed(1)} ${y(0)} L${roll[0][0].toFixed(1)} ${y(0)} Z`;
+  const e = roll[roll.length - 1];
+  g = g + `<path ${st("area", `fill:${colors && colors.coral};opacity:.1`)} d="${area}"/>` +
+    `<path ${st("line", `fill:none;stroke:${colors && colors.coral};stroke-width:2.5`)} d="${path}"/>` +
+    `<circle ${st("end", `fill:${colors && colors.coral};stroke:#fff;stroke-width:2`)} cx="${e[0]}" cy="${e[1]}" r="5"/>` +
+    `<text ${st("endlab", `fill:${colors && colors.ink};font-size:12px;font-weight:700;font-family:Arial`)} x="${e[0] + 9}" y="${e[1] + 4}">${r1(e[2])}</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Daily concern score over the last ${days} days">${g}</svg>`;
+}
+
+/* ---------- state ---------- */
+let tab = (location.hash || "").slice(1) || ls.get("cc.tab", "today");
+if (!["today", "screening", "dashboard", "report"].includes(tab)) tab = "today";
+let range = 60;
+let draft = null, screenDraft = null, lastSaved = null, screenResult = null, confirmClear = false;
+function newDraft() { return { wordsHidden: false, respondent: Store.profile.respondent || "self", answers: {}, dayGuess: null, recall: ["", "", ""], sleep: null, note: "" }; }
+
+/* ---------- views ---------- */
+function scale(name, opts, val, extra = "") {
+  return `<div class="scale ${extra}" style="--n:${opts.length}" role="group">` + opts.map((o, i) =>
+    `<button type="button" data-set="${name}" data-v="${i}" aria-pressed="${val === i}">${esc(o)}</button>`).join("") + `</div>`;
+}
+
+function viewToday() {
+  const t = todayKey(), d = data();
+  const done = Store.entries["c_" + t];
+  const streakDays = d.checkins.filter(c => daysBetween(c.date, t) < 30).length;
+  let h = `<section class="lede"><div class="eyebrow">Daily check-in</div><h1>${esc(fmtLong(t))}</h1></section>`;
+
+  if (done && !draft) {
+    const c = done, avg7 = avg(d.checkins.filter(o => o.date < t && daysBetween(o.date, t) <= 7).map(ciScore));
+    h += `<section class="section"><h2>Done for today.</h2>
+      <div class="figures">
+        <div class="figure"><span class="num">${ciScore(c)}<small> /18</small></span><span class="lab">Concern score</span></div>
+        <div class="figure"><span class="num">${c.recall}<small> /3</small></span><span class="lab">Words recalled</span></div>
+        <div class="figure"><span class="num">${dayOk(c) ? "Yes" : "No"}</span><span class="lab">Named the day</span></div>
+        <div class="figure"><span class="num">${avg7 == null ? "n/a" : r1(avg7)}</span><span class="lab">Prior 7-day average</span></div>
+      </div>
+      <p>${avg7 == null ? "Tomorrow's check-in will start building your baseline." : ciScore(c) > avg7 + 3 ? "Today ran higher than your recent average. One hard day means little on its own. Watch whether it repeats." : "Today is in line with your recent pattern."}</p>
+      <div class="btn-row"><button class="btn" data-act="go" data-to="dashboard">See the dashboard</button><button class="btn ghost" data-act="redo">Redo today's answers</button></div>
+      </section>`;
+    return h + logForm();
+  }
+
+  const dr = draft || (draft = newDraft());
+  const w = wordsFor(t);
+  h += `<section class="section"><div class="section-head"><span class="step-n">1</span><h2>Three words to hold onto</h2></div>`;
+  if (!dr.wordsHidden) {
+    h += `<p>Read these out loud once. Try to keep them in mind. You will be asked for them at the end.</p>
+      <div class="words">${w.map(x => `<div>${x}</div>`).join("")}</div>
+      <div class="btn-row"><button class="btn coral" data-act="hidewords">I have them. Hide the words.</button></div></section>`;
+    return h;
+  }
+  h += `<p class="muted">Words hidden. Keep them in mind.</p></section>`;
+
+  h += `<section class="section"><div class="section-head"><span class="step-n">2</span><h2>Who is answering?</h2></div>
+    ${scale("respondent", ["The person being tracked", "A family member or caregiver"], dr.respondent === "family" ? 1 : 0)}</section>`;
+
+  h += `<section class="section"><div class="section-head"><span class="step-n">3</span><h2>In the past 24 hours, how often...</h2></div><div>`;
+  DAILY.forEach(q => {
+    h += `<div class="q"><div class="q-text">${esc(q.text)}</div>${q.sub ? `<div class="q-sub">${esc(q.sub)}</div>` : ""}${scale("a:" + q.id, FREQ, dr.answers[q.id])}</div>`;
+  });
+  h += `<div class="q"><div class="q-text">How did you sleep last night?</div>${scale("sleep", ["Good", "Fair", "Poor"], ["Good", "Fair", "Poor"].indexOf(dr.sleep))}</div></div></section>`;
+
+  h += `<section class="section"><div class="section-head"><span class="step-n">4</span><h2>Without checking, what day of the week is it?</h2></div>
+    ${scale("day", DAYNAMES.map(x => x.slice(0, 3)), dr.dayGuess, "days")}</section>`;
+
+  h += `<section class="section"><div class="section-head"><span class="step-n">5</span><h2>Now, the three words</h2></div>
+    <p class="muted">Type what you remember, in any order. Leave a box empty if a word will not come.</p>
+    <div class="recall">${[0, 1, 2].map(i => `<input type="text" id="recall${i}" data-recall="${i}" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Word ${i + 1}" value="${esc(dr.recall[i])}">`).join("")}</div>
+    <label class="field" for="ci-note">Anything else worth noting today? (optional)<textarea id="ci-note" data-note placeholder="A new medicine, a fall, a stressful day, a good day">${esc(dr.note)}</textarea></label></section>`;
+
+  const ready = DAILY.every(q => dr.answers[q.id] != null) && dr.dayGuess != null;
+  h += `<div class="btn-row"><button class="btn coral" data-act="savecheckin" ${ready ? "" : "disabled"}>Save today's check-in</button>
+    <span class="small muted">${ready ? "Ready to save." : "Answer every question in steps 3 and 4 to save."}</span></div>`;
+  return h;
+}
+
+function logForm() {
+  const d = data();
+  const recent = d.logs.slice(-5).reverse();
+  return `<section class="section"><div class="section-head"><h2>Log something you noticed</h2></div>
+    <p class="muted">Specific moments carry weight with a doctor. Write what happened, not what you think it means.</p>
+    <div class="form-grid">
+      <label class="field" for="log-cat">What kind of moment<select id="log-cat">${LOGCATS.map(c => `<option>${esc(c)}</option>`).join("")}</select></label>
+      <label class="field" for="log-date">When<input type="text" id="log-date" value="${todayKey()}" inputmode="numeric" placeholder="YYYY-MM-DD"></label>
+    </div>
+    <label class="field" for="log-text">What happened<textarea id="log-text" placeholder="Called her sister by her late mother's name twice during lunch."></textarea></label>
+    <div class="btn-row"><button class="btn" data-act="addlog">Add to log</button></div>
+    ${recent.length ? `<ul class="log">${recent.map(l => logItem(l)).join("")}</ul>` : ""}
+  </section>`;
+}
+function logItem(l) {
+  const id = Object.keys(Store.entries).find(k => Store.entries[k] === l);
+  return `<li><span class="d">${fmtShort(l.date)}</span><span><span class="c">${esc(l.cat)}</span><br>${esc(l.text)}</span>${id ? `<button class="linklike small" data-act="dellog" data-id="${id}">Remove</button>` : "<span></span>"}</li>`;
+}
+
+function viewScreening() {
+  const d = data(), t = todayKey();
+  const last = d.screens[d.screens.length - 1];
+  const due = last ? addDays(last.date, 30) : t;
+  const sd = screenDraft || (screenDraft = { answers: {}, scd: {} });
+  let h = `<section class="lede"><div class="eyebrow">Monthly screening</div><h1>Compared with a year ago</h1>    <p class="muted small">${last ? `Last screening ${fmtFull(last.date)}. ${due <= t ? "A new one is due now." : "Next one due " + fmtFull(due) + "."}` : "No screening on record yet. This first one sets the starting point."} Family members can answer on someone's behalf.</p></section>`;
+
+  if (screenResult) {
+    const s = screenResult;
+    h += `<section class="section"><h2>Screening saved.</h2><div class="domains">` +
+      Object.keys(DOMAINS).map(dom => { const v = screenDomain(s, dom); return `<div class="domain"><strong>${DOMAINS[dom]}</strong><div class="bars"><div class="bar recent"><i style="width:${v == null ? 0 : Math.max(2, v * 100)}%"></i></div></div><span class="chg">${v == null ? "n/a" : Math.round(v * 100) + "% change"}</span></div>`; }).join("") +
+      `</div><p class="muted small">Percent of the maximum possible change reported in each area. 0% means no change was noticed.</p>
+      <div class="btn-row"><button class="btn" data-act="go" data-to="dashboard">See the dashboard</button><button class="btn ghost" data-act="newscreen">Start another</button></div></section>`;
+    return h;
+  }
+
+  let n = 1;
+  Object.keys(DOMAINS).forEach(dom => {
+    h += `<section class="section"><div class="section-head"><h2>${DOMAINS[dom]}</h2></div><div>`;
+    SCREEN.filter(q => q.domain === dom).forEach(q => {
+      h += `<div class="q"><div class="q-text">${n++}. ${esc(q.text)}</div>${scale("s:" + q.id, CHANGE, sd.answers[q.id])}</div>`;
+    });
+    h += `</div></section>`;
+  });
+  h += `<section class="section"><div class="section-head"><h2>Daily life</h2></div><p class="muted small">Adapted from the cognitive decline module of the CDC Behavioral Risk Factor Surveillance System.</p><div>`;
+  SCD.forEach(q => {
+    if (q.gate && sd.scd.scd !== "Yes") return;
+    h += `<div class="q"><div class="q-text">${esc(q.text)}</div>${scale("scd:" + q.id, q.opts, q.opts.indexOf(sd.scd[q.id]))}</div>`;
+  });
+  h += `</div></section>`;
+  const need = SCREEN.every(q => sd.answers[q.id] != null) && sd.scd.scd && (sd.scd.scd !== "Yes" || SCD.every(q => !q.gate || sd.scd[q.id]));
+  h += `<div class="btn-row"><button class="btn coral" data-act="savescreen" ${need ? "" : "disabled"}>Save screening</button><span class="small muted">${need ? "Ready to save." : "Answer every question to save."}</span></div>`;
+  return h;
+}
+
+function viewDashboard() {
+  const d = data(), a = analyze(d), L = LEVELS[a.level], t = todayKey();
+  let h = `<section class="lede"><div class="eyebrow">Dashboard</div><h1>The pattern so far</h1>
+    <p class="muted">${d.checkins.length} check-in${d.checkins.length === 1 ? "" : "s"}, ${d.screens.length} screening${d.screens.length === 1 ? "" : "s"}, and ${d.logs.length} logged moment${d.logs.length === 1 ? "" : "s"} since ${d.checkins.length ? fmtFull(d.checkins[0].date) : "today"}.</p></section>`;
+  if (!d.checkins.length && !d.screens.length && !d.logs.length) {
+    h += `<section class="section"><h2>Nothing recorded yet</h2><p>Your trend chart, areas of concern, and screening history will appear here after your first check-in. Each daily check-in takes about three minutes.</p><div class="btn-row"><button class="btn coral" data-act="go" data-to="today">Start today's check-in</button><button class="btn ghost" data-act="go" data-to="screening">Take the monthly screening</button></div></section>`;
+  }
+  h += `<section class="status-band ${L.cls}"><span class="eyebrow" style="color:inherit">Current read</span><span class="lvl">${L.name}</span><p>${L.text}</p></section>`;
+  h += `<div class="figures">
+    <div class="figure"><span class="num">${r1(a.recentAvg)}<small> /18</small></span><span class="lab">Concern score, last 14 days</span></div>
+    <div class="figure"><span class="num">${a.recallPct == null ? "n/a" : Math.round(a.recallPct * 100) + "%"}</span><span class="lab">Word recall, 30 days</span></div>
+    <div class="figure"><span class="num">${a.oriPct == null ? "n/a" : Math.round(a.oriPct * 100) + "%"}</span><span class="lab">Day named correctly, 30 days</span></div>
+    <div class="figure"><span class="num">${a.count30}<small> /30</small></span><span class="lab">Days checked in</span></div></div>`;
+
+  h += `<section class="section"><div class="section-head" style="justify-content:space-between;flex-wrap:wrap"><h2>Daily concern score</h2>
+    <div class="seg" role="group" aria-label="Time range">${[30, 60, 90].map(n => `<button data-act="range" data-n="${n}" aria-pressed="${range === n}">${n} days</button>`).join("")}</div></div>
+    <p class="muted small">Sum of the six daily questions, 0 to 18. Higher means more trouble was noticed. The line is a 7-day average, which smooths out single hard days.</p>
+    <div class="chart-box chart">${chartSVG(d, range)}</div>
+    <div class="legend"><span class="d">One check-in</span><span class="l">7-day average</span></div></section>`;
+
+  h += `<section class="section"><h2>Areas of concern</h2>`;
+  h += a.concerns.length ? `<ul class="concerns">${a.concerns.map(c => `<li><span class="tag ${c.lvl}">${c.lvl === "high" ? "Notable" : "Watch"}</span><span><strong>${esc(c.area)}.</strong> ${esc(c.text)}</span></li>`).join("")}</ul>`
+    : `<p>Nothing stands out right now. ${d.checkins.length < 21 ? "Trends need about three weeks of check-ins before comparisons mean much." : ""}</p>`;
+  h += `</section>`;
+
+  const maxv = 3;
+  h += `<section class="section"><h2>By area</h2><p class="muted small">Average daily rating on a 0 to 3 scale. The grey bar is the 8 weeks before; the coral bar is the last 14 days.</p><div class="domains">` +
+    Object.keys(DOMAINS).map(dom => {
+      const p = domainDaily(a.prior, dom), r = domainDaily(a.recent, dom);
+      const diff = p != null && r != null ? r - p : null;
+      return `<div class="domain"><strong>${DOMAINS[dom]}</strong><div class="bars">
+        <div class="bar"><i style="width:${p == null ? 0 : Math.max(1, p / maxv * 100)}%"></i></div>
+        <div class="bar recent"><i style="width:${r == null ? 0 : Math.max(1, r / maxv * 100)}%"></i></div></div>
+        <span class="chg" style="font-weight:${diff != null && diff >= 0.5 ? "700" : "400"}">${diff == null ? "n/a" : (diff >= 0 ? "+" : "") + r1(diff)}</span></div>`;
+    }).join("") + `</div><div class="legend"><span>Earlier</span><span class="r">Last 14 days</span></div></section>`;
+
+  if (d.screens.length) {
+    h += `<section class="section"><h2>Monthly screenings</h2><div class="table-box"><table><thead><tr><th>Date</th>${Object.values(DOMAINS).map(x => `<th>${x}</th>`).join("")}<th>Worse this year?</th></tr></thead><tbody>` +
+      d.screens.slice().reverse().map(s => `<tr><td>${fmtShort(s.date)}</td>${Object.keys(DOMAINS).map(dom => { const v = screenDomain(s, dom); return `<td>${v == null ? "n/a" : Math.round(v * 100) + "%"}</td>`; }).join("")}<td>${esc((s.scd || {}).scd || "n/a")}</td></tr>`).join("") +
+      `</tbody></table></div></section>`;
+  }
+  h += logForm();
+  return h;
+}
+
+function reportModel() {
+  const d = data(), a = analyze(d), p = Store.profile, t = todayKey();
+  return { d, a, p, t, from: d.checkins.length ? d.checkins[0].date : t };
+}
+function reportBody(m, colors) {
+  const { d, a, p, t, from } = m;
+  const L = LEVELS[a.level];
+  const fam = d.checkins.filter(c => c.respondent === "family").length;
+  const lines = [];
+  lines.push(`<div class="sheet-head" style="${colors ? "display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;border-bottom:2px solid " + colors.coral + ";padding-bottom:14px" : ""}"><div><div class="eyebrow" style="${colors ? "font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:" + colors.deep + ";font-weight:700" : ""}">CogniCare summary report</div><h2 style="${colors ? "font-family:Arial,sans-serif;font-weight:500;font-size:30px;margin:4px 0 0" : ""}">${esc(p.name || "Name not entered")}</h2></div><div class="small" style="text-align:right">Prepared ${fmtFull(t)}<br>Record ${fmtFull(from)} to ${fmtFull(t)}</div></div>`);
+  lines.push(`<dl style="${colors ? "display:grid;grid-template-columns:170px 1fr;gap:6px 14px;margin:0" : ""}">
+    <dt>Birth year</dt><dd>${esc(p.birthYear || "Not entered")}</dd>
+    <dt>County</dt><dd>${p.county ? esc(p.county) + " County, Tennessee" : "Not entered"}</dd>
+    <dt>Primary care provider</dt><dd>${esc(p.doctor || "Not entered")}</dd>
+    <dt>Data collected</dt><dd>${d.checkins.length} daily check-in${d.checkins.length === 1 ? "" : "s"} (${fam} answered by a family member), ${d.screens.length} monthly screenings, ${d.logs.length} logged events</dd>
+    <dt>Current read</dt><dd><strong>${L.name}.</strong> ${L.text}</dd></dl>`);
+  lines.push(`<div><h3 style="${colors ? "font-family:Arial,sans-serif;font-weight:500" : ""}">Key measures</h3><table style="${colors ? "border-collapse:collapse;width:100%;font-size:14px" : ""}"><thead><tr><th>Measure</th><th>Earlier (2 to 10 weeks ago)</th><th>Last 14 days</th></tr></thead><tbody>
+    <tr><td>Daily concern score (0 to 18)</td><td>${r1(a.priorAvg)}</td><td>${r1(a.recentAvg)}</td></tr>
+    <tr><td>Three-word recall (0 to 3)</td><td>${r1(a.recallPrior)}</td><td>${r1(a.recallRecent)}</td></tr>
+    ${Object.keys(DOMAINS).map(dom => `<tr><td>${DOMAINS[dom]} (0 to 3)</td><td>${r1(domainDaily(a.prior, dom))}</td><td>${r1(domainDaily(a.recent, dom))}</td></tr>`).join("")}
+    <tr><td>Wrong day of week named</td><td>${a.prior.filter(c => !dayOk(c)).length} of ${a.prior.length}</td><td>${a.oriMiss} of ${a.recent.length}</td></tr></tbody></table></div>`);
+  lines.push(`<div><h3 style="${colors ? "font-family:Arial,sans-serif;font-weight:500" : ""}">Daily concern score, last 90 days</h3>${chartSVG(d, 90, colors)}</div>`);
+  lines.push(`<div><h3 style="${colors ? "font-family:Arial,sans-serif;font-weight:500" : ""}">Areas of concern</h3>${a.concerns.length ? `<ul>${a.concerns.map(c => `<li><strong>${esc(c.area)}${c.lvl === "high" ? " (notable)" : ""}:</strong> ${esc(c.text)}</li>`).join("")}</ul>` : "<p>No areas currently flagged.</p>"}</div>`);
+  const ls3 = d.screens[d.screens.length - 1];
+  if (ls3) {
+    const s = ls3.scd || {};
+    lines.push(`<div><h3 style="${colors ? "font-family:Arial,sans-serif;font-weight:500" : ""}">Latest monthly screening, ${fmtFull(ls3.date)}</h3><ul>
+      ${SCREEN.filter(q => ls3.answers[q.id] === 1 || ls3.answers[q.id] === 2).map(q => `<li>${esc(q.text)}: <strong>${CHANGE[ls3.answers[q.id]].toLowerCase()}</strong></li>`).join("") || "<li>No changes reported versus a year ago.</li>"}
+      <li>Confusion or memory loss worse in past 12 months: <strong>${esc(s.scd || "n/a")}</strong></li>
+      ${s.scd === "Yes" ? `<li>Gave up household chores: ${esc(s.f1)}. Needed help with daily activities: ${esc(s.f2)}. Interfered with work or social life: ${esc(s.f3)}. Discussed with a provider: ${esc(s.f4)}.</li>` : ""}</ul></div>`);
+  }
+  if (d.logs.length) lines.push(`<div><h3 style="${colors ? "font-family:Arial,sans-serif;font-weight:500" : ""}">Logged events</h3><ul>${d.logs.slice().reverse().slice(0, 12).map(l => `<li>${fmtShort(l.date)}, ${esc(l.cat)}: ${esc(l.text)}</li>`).join("")}</ul></div>`);
+  lines.push(`<p class="note" style="${colors ? "font-size:12px;color:" + colors.muted + ";border-top:1px solid " + colors.rule + ";padding-top:12px" : ""}">CogniCare is a home observation tool, not a diagnostic test. Scores reflect self-report and family observation plus two brief tasks (three-word delayed recall and day-of-week orientation). Changes can come from sleep, mood, infection, hearing, or medication. Please use this record alongside a clinical assessment such as the Mini-Cog or MoCA when deciding whether further evaluation is needed.</p>`);
+  return lines.join("");
+}
+function reportText(m) {
+  const { d, a, p, t, from } = m, L = LEVELS[a.level];
+  const out = [`CogniCare update for ${p.name || "our family member"} (${fmtFull(t)})`, "",
+    `Current read: ${L.name}. ${L.text}`, "",
+    `Record: ${d.checkins.length} check-ins since ${fmtFull(from)}.`,
+    `Concern score, last 14 days: ${r1(a.recentAvg)} of 18 (earlier: ${r1(a.priorAvg)}).`,
+    `Word recall, last 14 days: ${r1(a.recallRecent)} of 3 (earlier: ${r1(a.recallPrior)}).`, ""];
+  if (a.concerns.length) { out.push("What stands out:"); a.concerns.forEach(c => out.push(`- ${c.area}: ${c.text}`)); }
+  else out.push("Nothing stands out right now.");
+  out.push("", "This is a home tracking summary, not a diagnosis.");
+  return out.join("\n");
+}
+
+function viewReport() {
+  const m = reportModel(), p = Store.profile;
+  let h = `<section class="lede"><div class="eyebrow">Report</div><h1>For the next appointment</h1></section>`;
+  h += `<section class="section"><h2>Report details</h2>
+    <div class="form-grid">
+      <label class="field" for="p-name">Name<input type="text" id="p-name" data-prof="name" value="${esc(p.name)}" placeholder="Full name"></label>
+      <label class="field" for="p-birth">Birth year<input type="number" id="p-birth" data-prof="birthYear" value="${esc(p.birthYear)}" placeholder="1950" min="1900" max="2010"></label>
+      <label class="field" for="p-county">Tennessee county<select id="p-county" data-prof="county"><option value="">Choose a county</option>${COUNTIES.map(c => `<option ${p.county === c ? "selected" : ""}>${c}</option>`).join("")}</select></label>
+      <label class="field" for="p-doc">Primary care provider<input type="text" id="p-doc" data-prof="doctor" value="${esc(p.doctor)}" placeholder="Clinic or doctor's name"></label>
+    </div>
+    <p class="small muted">Saved as you type.</p></section>`;
+  h += `<section class="section"><div class="section-head" style="justify-content:space-between;flex-wrap:wrap"><h2>Preview</h2>
+    <div class="btn-row"><button class="btn coral" data-act="dlreport">Save report file</button><button class="btn ghost" data-act="dlcsv">Save raw data (CSV)</button><button class="btn ghost" data-act="copyfam">Copy update for family</button></div></div>
+    <p class="small muted" id="dl-msg"></p>
+    <article class="sheet chart">${reportBody(m)}</article>
+    <textarea id="fam-text" readonly hidden></textarea></section>`;
+  h += `<section class="section"><h2>Help in Tennessee</h2><p class="muted">Memory clinics can be hours away in much of the state. These lines can point you to the closest evaluation, support group, or respite care.</p>
+    <div class="resources">
+      <div><strong>Alzheimer's Association Helpline</strong><span class="ph">1-800-272-3900</span><span class="small muted">Free, 24 hours, every day</span></div>
+      <div><strong>Eldercare Locator</strong><span class="ph">1-800-677-1116</span><span class="small muted">Finds your local Area Agency on Aging and Disability</span></div>
+      <div><strong>Tennessee Commission on Aging and Disability</strong><span><a href="https://www.tn.gov/aging.html" target="_blank" rel="noopener">tn.gov/aging</a></span><span class="small muted">State programs for older adults and caregivers</span></div>
+    </div></section>`;
+  h += `<section class="section"><h2>Your data</h2><p class="muted small">${Store.mode === "cloud" ? "Your record is stored privately in your account. Other people who open this page cannot see it." : "Your record is stored only in this browser on this device."}</p>
+    <div class="btn-row">${confirmClear ? `<span>Erase every check-in, screening, and log entry? This cannot be undone.</span><button class="btn coral" data-act="clearyes">Erase everything</button><button class="btn ghost" data-act="clearno">Keep my data</button>` : `<button class="btn ghost" data-act="clear">Erase my record</button>`}</div></section>`;
+  return h;
+}
+
+/* ---------- render + events ---------- */
+function render() {
+  document.querySelectorAll("nav.tabs button").forEach(b => b.setAttribute("aria-current", b.dataset.tab === tab ? "page" : "false"));
+  const v = { today: viewToday, screening: viewScreening, dashboard: viewDashboard, report: viewReport }[tab];
+  $("#app").innerHTML = `<div class="view">${v()}</div>`;
+}
+function go(t) { tab = t; ls.set("cc.tab", t); render(); window.scrollTo(0, 0); }
+
+document.querySelector("nav.tabs").addEventListener("click", e => { const b = e.target.closest("button[data-tab]"); if (b) go(b.dataset.tab); });
+
+async function save(filename, content) {
+  const msg = $("#dl-msg");
+  let dl = null;
+  try { dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null; } catch {}
+  if (!dl) {
+    // Plain browser (for example, opened from VS Code): download through a temporary link.
+    try {
+      const blob = new Blob([content], { type: filename.endsWith(".csv") ? "text/csv" : "text/html" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      msg.textContent = "Saved " + filename + ".";
+    } catch { msg.textContent = "Saving files is not available in this view. Use Copy update for family instead."; }
+    return;
+  }
+  try { await dl.save({ filename, data: content }); msg.textContent = "Saved " + filename + "."; }
+  catch (err) { msg.textContent = err && err.code === "declined" ? "Save cancelled." : "The file could not be saved here. Try again from claude.ai."; }
+}
+function reportFile() {
+  const m = reportModel();
+  const c = { coral: "#e2525c", deep: "#000000", ink: "#000000", muted: "#000000", rule: "#ecd3d3", dot: "#efa3a6" };
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CogniCare report ${m.t}</title>
+<style>body{font-family:Arial,Helvetica,sans-serif;color:${c.ink};max-width:760px;margin:32px auto;padding:0 20px;line-height:1.5;font-size:15px}th,td{text-align:left;padding:6px 10px 6px 0;border-bottom:1px solid ${c.rule}}th{font-size:12px;text-transform:uppercase;color:${c.muted}}h3{margin:24px 0 8px}svg{width:100%;height:auto}dt{color:${c.muted}}dd{margin:0}.small{font-size:13px;color:${c.muted}}@media print{body{margin:0}}</style></head><body>${reportBody(m, c)}</body></html>`;
+}
+function csvFile() {
+  const d = data();
+  const rows = [["date", "respondent", ...DAILY.map(q => q.id), "concern_score", "recall_of_3", "day_named_correctly", "sleep", "note"]];
+  d.checkins.forEach(c => rows.push([c.date, c.respondent, ...DAILY.map(q => c.answers[q.id]), ciScore(c), c.recall, dayOk(c) ? 1 : 0, c.sleep || "", c.note || ""]));
+  return rows.map(r => r.map(v => { const s = String(v ?? ""); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }).join(",")).join("\n");
+}
+
+$("#app").addEventListener("click", async e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.set) {
+    const v = Number(b.dataset.v), [kind, id] = b.dataset.set.split(":");
+    if (tab === "today") {
+      if (kind === "respondent") draft.respondent = v ? "family" : "self";
+      else if (kind === "a") draft.answers[id] = v;
+      else if (kind === "sleep") draft.sleep = ["Good", "Fair", "Poor"][v];
+      else if (kind === "day") draft.dayGuess = (v + 0) % 7;
+    } else if (tab === "screening") {
+      if (kind === "s") screenDraft.answers[id] = v;
+      else if (kind === "scd") { const q = SCD.find(x => x.id === id); screenDraft.scd[id] = q.opts[v]; }
+    }
+    render(); return;
+  }
+  const act = b.dataset.act;
+  if (act === "go") go(b.dataset.to);
+  else if (act === "hidewords") { draft.wordsHidden = true; render(); }
+  else if (act === "redo") { draft = newDraft(); render(); }
+  else if (act === "savecheckin") {
+    const t = todayKey(), w = wordsFor(t);
+    const typed = draft.recall.map(x => x.trim().toLowerCase().replace(/s$/, ""));
+    const recall = w.filter(x => typed.includes(x.replace(/s$/, ""))).length;
+    Store.put("c_" + t, { type: "checkin", date: t, respondent: draft.respondent, answers: draft.answers, recall, dayGuess: draft.dayGuess, sleep: draft.sleep, note: draft.note.trim() });
+    Store.setProfile({ ...Store.profile, respondent: draft.respondent });
+    draft = null; render(); window.scrollTo(0, 0); toast("Check-in saved.");
+  }
+  else if (act === "savescreen") {
+    const k = todayKey(), s = { type: "screening", date: k, answers: screenDraft.answers, scd: screenDraft.scd };
+    Store.put("s_" + k, s); screenResult = s; screenDraft = null; render(); window.scrollTo(0, 0); toast("Screening saved.");
+  }
+  else if (act === "newscreen") { screenResult = null; render(); }
+  else if (act === "range") { range = Number(b.dataset.n); render(); }
+  else if (act === "addlog") {
+    const text = $("#log-text").value.trim(), date = $("#log-date").value.trim();
+    if (!text) { toast("Describe what happened before adding it."); return; }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || isNaN(parseKey(date))) { toast("Enter the date as YYYY-MM-DD."); return; }
+    Store.put("l_" + date + "_" + Date.now(), { type: "log", date, cat: $("#log-cat").value, text });
+    render(); toast("Added to the log.");
+  }
+  else if (act === "dellog") { Store.del(b.dataset.id); render(); }
+  else if (act === "dlreport") save(`CogniCare-report-${todayKey()}.html`, reportFile());
+  else if (act === "dlcsv") save(`CogniCare-data-${todayKey()}.csv`, csvFile());
+  else if (act === "copyfam") {
+    const txt = reportText(reportModel());
+    try { await navigator.clipboard.writeText(txt); toast("Update copied. Paste it into a text or email."); }
+    catch { const ta = $("#fam-text"); ta.value = txt; ta.hidden = false; ta.focus(); ta.select(); toast("Select all and copy the text below."); }
+  }
+  else if (act === "clear") { confirmClear = true; render(); }
+  else if (act === "clearno") { confirmClear = false; render(); }
+  else if (act === "clearyes") { Store.clearAll(); confirmClear = false; draft = null; render(); toast("Record erased."); }
+});
+$("#app").addEventListener("input", e => {
+  const el = e.target;
+  if (el.dataset.recall != null && draft) draft.recall[Number(el.dataset.recall)] = el.value;
+  else if (el.hasAttribute("data-note") && draft) draft.note = el.value;
+  else if (el.dataset.prof) Store.setProfile({ ...Store.profile, [el.dataset.prof]: el.value });
+});
+$("#app").addEventListener("change", e => {
+  const el = e.target;
+  if (el.dataset.prof) {
+    Store.setProfile({ ...Store.profile, [el.dataset.prof]: el.value });
+    const sheet = $(".sheet"); if (sheet) sheet.innerHTML = reportBody(reportModel());
+  }
+});
+
+render();
+Store.init();
+})();
+</script>
+
+</body>
+</html>
